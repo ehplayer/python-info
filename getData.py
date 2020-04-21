@@ -43,8 +43,8 @@ def getNasdaqRates():
         lastDropDay = datetime.strptime(nasdaqRateList[0].date, '%Y%m%d')
         now = datetime.now()
         diff = (now - lastDropDay).days
-        message.append('최근 나스닥 -3% 하락일:' + str(nasdaqRateList[0].date))
-        message.append('최근 나스닥 -3% 하락일부터 오늘까지 일수:' + str(diff) + '일')
+        message.append('최근 나스닥 -3% 이하 하락일:' + str(nasdaqRateList[0].date))
+        message.append('최근 나스닥 -3% 이하 하락일부터 오늘까지 일수:' + str(diff) + '일')
         if diff < 61:
             message.append('현재 상황:' + '공황중')
         else:
@@ -54,7 +54,7 @@ def getNasdaqRates():
 def getNasdaqRate(page):
     nasdaqDailyData = json.loads(urlopen(apiUrl + page, context=context).read())
     if page == '1':
-        message.append('최근(' + nasdaqDailyData[1]['xymd'] + ') 나스닥 등락률: ' + str(nasdaqDailyData[1]['rate']) + '%')
+        message.append('최근(' + nasdaqDailyData[0]['xymd'] + ') 나스닥 등락률: ' + str(nasdaqDailyData[0]['rate']) + '%')
     for idx, dailyData in enumerate(nasdaqDailyData):
         if dailyData['rate'] <= -3:
             nasdaqRateList.append(NasdaqRate(dailyData['xymd'], dailyData['rate']))
@@ -69,8 +69,9 @@ def getNasdaqMarketCap():
     nasdaqMarketCapList = listOfTuples(nameList, valueList)
     nasdaqMarketCapList.sort(key=value, reverse=True)
     message.append('Nasdaq 시총 1위 기업:' + nasdaqMarketCapList[0][0] + '(' + str(nasdaqMarketCapList[0][1]) + "B)")
-    if (nasdaqMarketCapList[0][1] - nasdaqMarketCapList[1][1]) / nasdaqMarketCapList[0][1] > 0.1:
+    if (nasdaqMarketCapList[0][1] - nasdaqMarketCapList[1][1]) / nasdaqMarketCapList[0][1] <= 0.1:
         message.append('Nasdaq 시총 2위 기업:' + nasdaqMarketCapList[1][0] + '(' + str(nasdaqMarketCapList[1][1]) + "B)")
+        message.append('2위 기업과의 차이가 10% 미만이므로 2위까지 표시합니다.')
 
 
 def listOfTuples(l1, l2):
@@ -94,4 +95,4 @@ if __name__ == '__main__':
 
     print('\n'.join(message))
     urlopen(telegramUrl + parse.quote('\n'.join(message)), context=context)
-    # urlopen(telegram2Url + parse.quote('\n'.join(message)), context=context)
+    urlopen(telegram2Url + parse.quote('\n'.join(message)), context=context)
